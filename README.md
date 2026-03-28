@@ -86,6 +86,24 @@ Human approves direction.
 
 Do not let tools expand scope autonomously.
 
+## GitHub workflow
+
+Use a small PR-first model:
+- `main` is the protected branch
+- every change starts from a scoped task branch
+- every completed change goes through a pull request
+- review happens before merge
+- Codex must work through branches and PRs only, never by pushing directly to `main`
+
+Recommended flow:
+1. define a small task
+2. create a task branch such as `task/<short-name>` or `fix/<short-name>`
+3. implement and verify the scoped change
+4. open a PR with summary, verification notes, and scope boundaries
+5. merge only after approval and any required checks pass
+
+See [docs/github-setup.md](docs/github-setup.md) for the exact GitHub protection settings and PR guidance.
+
 ---
 
 ## Engineering principles
