@@ -1,0 +1,2 @@
+[console_scripts]
+memex-collector = collector.main:main
