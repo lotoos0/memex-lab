@@ -16,6 +16,7 @@ dependencies = [
 
 [project.scripts]
 memex-collector = "collector.main:main"
+memex-scorer = "scorer.__main__:main"
 
 [tool.setuptools.packages.find]
-include = ["collector*"]
+include = ["collector*", "scorer*"]

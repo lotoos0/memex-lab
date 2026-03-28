@@ -128,5 +128,37 @@ The decoded mint should produce bytes without raising an exception.
 7. Confirm that a token with both create and migration records has `has_migrated=true` and `migration_target` populated from the migration record.
 8. Re-run `python -m collector.snapshots` without changing the inputs and confirm the number of lines in `data/snapshots.jsonl` does not grow.
 
+## Scorer
+1. Run the scorer with `python -m scorer`.
+2. Confirm `data/scored_snapshots.jsonl` exists.
+3. Confirm the file is overwritten on each run rather than appended.
+4. Confirm each line is valid JSON.
+5. Confirm each scored record includes all snapshot fields plus:
+   - `score_version`
+   - `score_total`
+   - `score_reasons`
+   - `score_flags`
+   - `scored_at`
+6. Confirm scoring remains offline and deterministic for the same snapshot inputs apart from the run timestamp in `scored_at`.
+7. Confirm a normal token snapshot with `created_at`, `creator`, `token_standard`, and `bonding_curve`, but no migration, scores `6`.
+   - Expected rule breakdown:
+   - `has_create_event (+2)`
+   - `creator_present (+1)`
+   - `token_standard_known (+1)`
+   - `bonding_curve_present (+1)`
+   - `lifecycle_order_valid (+1)`
+8. Confirm a migrated token with valid lifecycle order and `migration_target` scores `9`.
+   - Expected rule breakdown:
+   - `has_create_event (+2)`
+   - `creator_present (+1)`
+   - `token_standard_known (+1)`
+   - `bonding_curve_present (+1)`
+   - `has_migration_event (+2)`
+   - `migration_target_present (+1)`
+   - `lifecycle_order_valid (+1)`
+9. Confirm a snapshot missing `creator` receives the `missing_creator` flag.
+10. Confirm a snapshot with `migrated_at` earlier than `created_at` receives the `lifecycle_order_invalid` flag and does not receive the lifecycle bonus.
+11. Re-run `python -m scorer` without changing inputs and confirm score totals, reasons, and flags stay the same across runs.
+
 ## Expected Result
-At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, and `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots.
+At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, and `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable scored records.
