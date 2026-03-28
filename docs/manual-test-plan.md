@@ -1,7 +1,7 @@
 # Manual Test Plan
 
 ## Goal
-Verify that the staged offline pipeline listens to pump.fun new token creation and migration logs, appends normalized records to JSONL files, builds offline snapshots in `data/snapshots.jsonl`, scores them into `data/scored_snapshots.jsonl`, and filters them into `data/filtered_snapshots.jsonl`.
+Verify that the staged offline pipeline listens to pump.fun new token creation and migration logs, appends normalized records to JSONL files, builds offline snapshots in `data/snapshots.jsonl`, scores them into `data/scored_snapshots.jsonl`, filters them into `data/filtered_snapshots.jsonl`, and supports offline review, export, and labeling through `reviewkit`.
 
 ## Setup
 1. Create a virtual environment.
@@ -175,9 +175,48 @@ The decoded mint should produce bytes without raising an exception.
 7. Confirm a record is only classified as `strong` when `score_total >= 7` and `has_blocking_flags=false`.
 8. Confirm a migrated record with complete lifecycle data, no blocking flags, and high score can be classified as `strong`.
 9. Confirm a record with `lifecycle_order_invalid` is not classified as `strong`.
-10. Confirm `is_complete_record=true` only when create-side and migration-side essentials are both present together.
+10. Confirm `is_complete_record=true` only when `created_at`, `creator`, `bonding_curve`, `has_migrated=true`, and `migration_target` are all present together.
 11. Confirm `filter_reasons` stay concise and explicit, such as `score_total>=7`, `no_blocking_flags`, `complete_record`, `blocking_flags_present`, or `incomplete_record`.
 12. Confirm the screener prints a lightweight summary with total count, weak / partial / strong counts, blocking-flag count, and output path.
 
+## Reviewkit Report
+1. Run the report with `python -m reviewkit.report`.
+2. Confirm it reads `data/filtered_snapshots.jsonl` by default.
+3. Confirm it prints concise counts for:
+   - total records
+   - `quality_band`
+   - `has_migrated`
+   - `has_blocking_flags`
+   - labels
+   - `score_total`
+4. Confirm the labels section includes unlabeled count and orphan-label count.
+
+## Reviewkit Export
+1. Run an explicit export such as `python -m reviewkit.export --quality-band strong --output-path data/exports/strong.jsonl`.
+2. Confirm the export file is written as JSONL and overwritten on rerun.
+3. Confirm the export command fails if no explicit filter is provided.
+4. Confirm exported records are filtered only by the requested explicit conditions.
+5. Confirm label-based export works when labels exist, for example `python -m reviewkit.export --label interesting --output-path data/exports/interesting.jsonl`.
+6. Confirm `python -m reviewkit.export --min-score 7 --output-path data/exports/min-score-7.jsonl` exports only records with `score_total >= 7`.
+7. Confirm `python -m reviewkit.export --quality-band partial --limit 5 --output-path data/exports/partial-top-5.jsonl` writes at most 5 records after applying the active filters.
+8. Confirm combined filters keep AND logic, for example `--quality-band strong --has-migrated true --min-score 7 --limit 3` only exports records matching all active conditions before truncation.
+
+## Reviewkit Label
+1. Pick a mint that exists in `data/filtered_snapshots.jsonl`.
+2. Set a label with `python -m reviewkit.label --mint <MINT> --label interesting`.
+3. Confirm `data/labels/review_labels.jsonl` is created.
+4. Confirm label records are stored separately from `data/filtered_snapshots.jsonl`.
+5. Confirm each label record includes:
+   - `mint`
+   - `label`
+   - `labeled_at`
+6. Confirm setting the same mint again updates that mint entry instead of creating duplicates.
+7. Confirm setting a label for a mint that does not exist in the filtered snapshots input fails with a clear error.
+8. Confirm `python -m reviewkit.label --list` prints stored labels without requiring filtered-snapshot mint validation.
+9. Confirm `python -m reviewkit.label --remove <MINT>` removes the stored label without requiring filtered-snapshot mint validation.
+10. Confirm removing a missing mint does not mutate unrelated labels.
+11. Confirm `python -m reviewkit.label --mint <MINT> --label interesting --note "manual follow-up"` stores `note` in the label record.
+12. Confirm omitting `--note` still stores a valid label record without requiring a note field.
+
 ## Expected Result
-At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable scored records, and `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records.
+At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable scored records, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, and `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs.
