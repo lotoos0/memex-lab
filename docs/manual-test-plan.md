@@ -1,7 +1,7 @@
 # Manual Test Plan
 
 ## Goal
-Verify that the M2 collector listens to pump.fun new token creation and migration logs, appends normalized records to JSONL files, and builds offline snapshots in `data/snapshots.jsonl`.
+Verify that the staged offline pipeline listens to pump.fun new token creation and migration logs, appends normalized records to JSONL files, builds offline snapshots in `data/snapshots.jsonl`, scores them into `data/scored_snapshots.jsonl`, and filters them into `data/filtered_snapshots.jsonl`.
 
 ## Setup
 1. Create a virtual environment.
@@ -160,5 +160,24 @@ The decoded mint should produce bytes without raising an exception.
 10. Confirm a snapshot with `migrated_at` earlier than `created_at` receives the `lifecycle_order_invalid` flag and does not receive the lifecycle bonus.
 11. Re-run `python -m scorer` without changing inputs and confirm score totals, reasons, and flags stay the same across runs.
 
+## Screener
+1. Run the screener with `python -m screener`.
+2. Confirm `data/filtered_snapshots.jsonl` exists.
+3. Confirm the file is overwritten on each run rather than appended.
+4. Confirm each line is valid JSON.
+5. Confirm each filtered record includes all scored fields plus:
+   - `quality_band`
+   - `is_complete_record`
+   - `has_blocking_flags`
+   - `filter_version`
+   - `filter_reasons`
+6. Confirm a create-only snapshot with `score_total=6` and no blocking flags is classified as `partial`, not `strong`.
+7. Confirm a record is only classified as `strong` when `score_total >= 7` and `has_blocking_flags=false`.
+8. Confirm a migrated record with complete lifecycle data, no blocking flags, and high score can be classified as `strong`.
+9. Confirm a record with `lifecycle_order_invalid` is not classified as `strong`.
+10. Confirm `is_complete_record=true` only when create-side and migration-side essentials are both present together.
+11. Confirm `filter_reasons` stay concise and explicit, such as `score_total>=7`, `no_blocking_flags`, `complete_record`, `blocking_flags_present`, or `incomplete_record`.
+12. Confirm the screener prints a lightweight summary with total count, weak / partial / strong counts, blocking-flag count, and output path.
+
 ## Expected Result
-At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, and `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable scored records.
+At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable scored records, and `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records.

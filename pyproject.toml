@@ -17,6 +17,7 @@ dependencies = [
 [project.scripts]
 memex-collector = "collector.main:main"
 memex-scorer = "scorer.__main__:main"
+memex-screener = "screener.__main__:main"
 
 [tool.setuptools.packages.find]
-include = ["collector*", "scorer*"]
+include = ["collector*", "scorer*", "screener*"]
