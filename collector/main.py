@@ -4,15 +4,24 @@ import asyncio
 import logging
 
 from collector.config import load_config
+from collector.listeners.migration_logs import MigrationLogsListener
 from collector.listeners.pumpfun_logs import PumpFunLogsListener
 from collector.storage.jsonl_writer import JsonlWriter
 
 
 async def run() -> None:
     config = load_config()
-    writer = JsonlWriter(config.output_path)
-    listener = PumpFunLogsListener(config=config, writer=writer)
-    await listener.listen_forever()
+    create_writer = JsonlWriter(config.output_path)
+    migration_writer = JsonlWriter(config.migration_output_path)
+    create_listener = PumpFunLogsListener(config=config, writer=create_writer)
+    migration_listener = MigrationLogsListener(
+        config=config,
+        writer=migration_writer,
+    )
+    await asyncio.gather(
+        create_listener.listen_forever(),
+        migration_listener.listen_forever(),
+    )
 
 
 def main() -> None:
