@@ -1,0 +1,149 @@
+# memex-lab
+
+memex-lab is a staged research and execution framework for low market cap Solana memecoins.
+
+The project is built in controlled layers:
+1. collector
+2. scorer
+3. executor
+
+The current focus is not full automation.
+The current focus is building a reliable collector and a clean scoring foundation.
+
+---
+
+## Current status
+
+Project phase: early setup
+
+Current priority:
+- repository structure
+- agent workflow
+- collector-first architecture
+- documentation-first project control
+
+---
+
+## Goals
+
+- collect real-time token lifecycle data
+- normalize raw events into usable signals
+- support structured token scoring
+- prepare a safe foundation for later execution logic
+- keep the system observable and testable
+
+---
+
+## Non-goals for now
+
+- full-auto sniper trading
+- complex dashboards
+- advanced prediction models
+- premature optimization
+- large-scale production deployment
+
+---
+
+## Architecture direction
+
+### 1. Collector
+Responsible for:
+- detecting new tokens
+- ingesting logs and events
+- tracking bonding curve progress
+- detecting migration events
+- storing raw and normalized data
+
+### 2. Scorer
+Responsible for:
+- reading collector output
+- applying structured scoring logic
+- producing explainable token evaluations
+
+### 3. Executor
+Responsible for:
+- acting on approved rules
+- enforcing strict risk controls
+- keeping actions auditable
+
+Executor is a later-stage module.
+
+---
+
+## Development workflow
+
+This project uses a human-in-the-loop workflow.
+
+### Roles
+- Claude Code = planner / reviewer
+- Codex = implementer / fixer
+- Human = final decision maker
+
+### Rule
+Claude plans.
+Codex implements.
+Human approves direction.
+
+Do not let tools expand scope autonomously.
+
+---
+
+## Engineering principles
+
+- keep code and docs in English
+- prefer small, scoped changes
+- avoid unnecessary abstractions
+- separate collection, scoring, and execution concerns
+- prefer observability over cleverness
+- do not claim completion without verification
+
+---
+
+## Repository structure
+
+```text
+memex-lab/
+├─ AGENTS.md
+├─ CLAUDE.md
+├─ README.md
+├─ docs/
+├─ collector/
+├─ scorer/
+├─ executor/
+└─ data/
+
+---
+
+## Expected documentation
+
+Planned docs:
+
+- docs/project-brief.md
+- docs/architecture.md
+- docs/manual-test-plan.md
+- docs/task-workflow.md
+
+---
+
+## Project philosophy
+
+This project is not built to chase hype.
+
+It is built to:
+
+- observe first
+- structure second
+- automate last
+
+The system must earn complexity.
+
+---
+
+## Next milestone
+
+Build the first collector milestone:
+
+- define collector scope
+- choose initial stack
+- decide storage format
+- log first real-time events
