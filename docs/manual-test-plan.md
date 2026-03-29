@@ -1,7 +1,7 @@
 # Manual Test Plan
 
 ## Goal
-Verify that the staged offline pipeline listens to pump.fun new token creation and migration logs, appends normalized records to JSONL files, builds offline snapshots in `data/snapshots.jsonl`, scores them into `data/scored_snapshots.jsonl`, filters them into `data/filtered_snapshots.jsonl`, and supports offline review, export, and labeling through `reviewkit`.
+Verify that the staged offline pipeline listens to pump.fun new token creation and migration logs, appends normalized records to JSONL files, builds offline snapshots in `data/snapshots.jsonl`, scores them into `data/scored_snapshots.jsonl`, filters them into `data/filtered_snapshots.jsonl`, supports offline review, export, and labeling through `reviewkit`, and produces a count-based dataset audit report.
 
 ## Setup
 1. Create a virtual environment.
@@ -218,5 +218,44 @@ The decoded mint should produce bytes without raising an exception.
 11. Confirm `python -m reviewkit.label --mint <MINT> --label interesting --note "manual follow-up"` stores `note` in the label record.
 12. Confirm omitting `--note` still stores a valid label record without requiring a note field.
 
+## Dataset Audit
+1. Run the audit with `python -m audit`.
+2. Confirm `data/reports/dataset_audit.json` exists.
+3. Confirm the file is overwritten on each run rather than appended.
+4. Confirm the audit reads `data/filtered_snapshots.jsonl` and optionally reads `data/labels/review_labels.jsonl` when present.
+5. Run the audit once with a missing labels path, for example `python -m audit --labels-path data/labels/does-not-exist.jsonl`, and confirm it still writes a valid report with empty label-derived sections.
+6. Confirm the audit JSON includes these sections:
+   - `overview`
+   - `quality_band_distribution`
+   - `has_migrated_distribution`
+   - `has_blocking_flags_distribution`
+   - `lifecycle_coverage`
+   - `score_total_distribution`
+   - `flag_distribution`
+   - `label_distribution`
+   - `missing_field_distribution`
+7. Confirm `overview` includes:
+   - `total_records`
+   - `total_labeled_records`
+   - `total_migrated_records`
+   - `total_blocking_records`
+   - `total_complete_records`
+8. Confirm `lifecycle_coverage` includes:
+   - `created_at_present`
+   - `created_at_missing`
+   - `migrated_at_present`
+   - `migrated_at_missing`
+   - `full_lifecycle`
+   - `create_only`
+   - `migration_only`
+9. Confirm `flag_distribution` includes per-flag counts and a `top_flags` list for the most frequent score flags.
+10. Confirm `label_distribution` includes count by label, label x quality band, and label x has_migrated cross-tabs.
+11. Confirm the stdout summary stays concise and human-readable and includes a labels line.
+12. Confirm missing-field counts only treat these fields as audited: `created_at`, `creator`, `token_standard`, `bonding_curve`, `migration_target`, and `snapshot_built_at`.
+13. Confirm missing-field counts only treat a field as missing when it is absent, `null`, or `""`.
+14. Confirm fields with `0` or `false` are not counted as missing when the field is present.
+15. Re-run `python -m audit` without changing inputs and confirm all count-based sections stay the same across runs, aside from the timestamp field in the report.
+16. If labels exist, confirm `overview.orphan_label_count` reflects labels whose mints are not present in the filtered snapshots input.
+
 ## Expected Result
-At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable scored records, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, and `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs.
+At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable scored records, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, and `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report.

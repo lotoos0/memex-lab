@@ -21,6 +21,7 @@ memex-screener = "screener.__main__:main"
 memex-review-report = "reviewkit.report:main"
 memex-review-export = "reviewkit.export:main"
 memex-review-label = "reviewkit.label:main"
+memex-dataset-audit = "audit.__main__:main"
 
 [tool.setuptools.packages.find]
-include = ["collector*", "scorer*", "screener*", "reviewkit*"]
+include = ["collector*", "scorer*", "screener*", "reviewkit*", "audit*"]
