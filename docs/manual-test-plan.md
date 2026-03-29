@@ -128,7 +128,7 @@ The decoded mint should produce bytes without raising an exception.
 7. Confirm that a token with both create and migration records has `has_migrated=true` and `migration_target` populated from the migration record.
 8. Re-run `python -m collector.snapshots` without changing the inputs and confirm the number of lines in `data/snapshots.jsonl` does not grow.
 
-## Scorer
+## Scorer v0
 1. Run the scorer with `python -m scorer`.
 2. Confirm `data/scored_snapshots.jsonl` exists.
 3. Confirm the file is overwritten on each run rather than appended.
@@ -159,6 +159,37 @@ The decoded mint should produce bytes without raising an exception.
 9. Confirm a snapshot missing `creator` receives the `missing_creator` flag.
 10. Confirm a snapshot with `migrated_at` earlier than `created_at` receives the `lifecycle_order_invalid` flag and does not receive the lifecycle bonus.
 11. Re-run `python -m scorer` without changing inputs and confirm score totals, reasons, and flags stay the same across runs.
+
+## Scorer v1
+1. Run the scorer v1 with `python -m scorer --score-version v1`.
+2. Confirm `data/scored_snapshots_v1.jsonl` exists.
+3. Confirm v1 output is written to a separate file and does not overwrite `data/scored_snapshots.jsonl`.
+4. Confirm each v1 scored record includes the same schema as v0 and has `score_version="v1"`.
+5. Confirm a create-only complete record that scored `6` in v0 now scores `5` in v1 because the lifecycle bonus is no longer awarded without a confirmed two-event lifecycle.
+6. Confirm a migrated record with `created_at`, `migrated_at`, valid temporal order, and `migration_target` still scores `9` in v1.
+7. Confirm a migration-only record receives the informational `migration_only` flag in v1.
+8. Confirm v1 no longer emits these removed noisy flags:
+   - `create_event_count_unexpected`
+   - `migration_event_count_unexpected`
+   - `source_count_unexpected`
+   - `source_count_exceeds_event_count`
+   - `missing_first_seen_at`
+9. Re-run `python -m scorer --score-version v1` without changing inputs and confirm score totals, reasons, and flags stay the same across runs.
+
+## Scorer Comparison
+1. Run the comparison with `python -m scorer compare`.
+2. Confirm `data/reports/scorer_v0_vs_v1.json` exists.
+3. Confirm the comparison report is aggregate-only and does not contain per-mint record dumps.
+4. Confirm the report includes:
+   - `overview`
+   - `score_delta_distribution`
+   - `score_band_distribution`
+   - `flag_delta_summary`
+5. Confirm the score delta distribution prominently shows `-1` for create-only records.
+6. Confirm create-only complete records drop from `6` in v0 to `5` in v1.
+7. Confirm migrated valid records remain at `9` in both versions.
+8. Confirm `changed_score_band_count` is aggregate-only and uses the same screener thresholds and blocking definitions as before.
+9. Re-run `python -m scorer compare` without changing inputs and confirm the count-based sections stay the same across runs, aside from the comparison timestamp.
 
 ## Screener
 1. Run the screener with `python -m screener`.
@@ -258,4 +289,4 @@ The decoded mint should produce bytes without raising an exception.
 16. If labels exist, confirm `overview.orphan_label_count` reflects labels whose mints are not present in the filtered snapshots input.
 
 ## Expected Result
-At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable scored records, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, and `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report.
+At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer compare` overwrites `data/reports/scorer_v0_vs_v1.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, and `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report.
