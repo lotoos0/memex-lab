@@ -288,5 +288,42 @@ The decoded mint should produce bytes without raising an exception.
 15. Re-run `python -m audit` without changing inputs and confirm all count-based sections stay the same across runs, aside from the timestamp field in the report.
 16. If labels exist, confirm `overview.orphan_label_count` reflects labels whose mints are not present in the filtered snapshots input.
 
+## Candidate Selector
+1. Prepare or provide `data/filtered_snapshots_v1.jsonl` before running the selector.
+2. Run the selector with `python -m selector`.
+3. Confirm `data/review_candidates.jsonl` exists.
+4. Confirm the file is overwritten on each run rather than appended.
+5. Confirm each candidate record includes:
+   - `mint`
+   - `candidate_class`
+   - `candidate_reasons`
+   - `selection_version`
+   - `quality_band`
+   - `score_version`
+   - `score_total`
+   - `score_reasons`
+   - `score_flags`
+   - `filter_reasons`
+   - `has_migrated`
+   - `has_blocking_flags`
+   - `is_complete_record`
+   - `created_at`
+   - `migrated_at`
+   - `token_standard`
+   - `creator`
+   - `migration_target`
+   - `label`
+   - `label_labeled_at`
+   - `label_note`
+6. Confirm the selector fails with a clear error if `data/filtered_snapshots_v1.jsonl` is missing.
+7. Confirm the selector fails with a clear error if the input file exists but is empty or contains no valid records.
+8. Confirm `suspect` forces `ignore_for_now`.
+9. Confirm `interesting` only promotes `review_if_time` to `review_now` and does not rescue `ignore_for_now`.
+10. Confirm records with blocking flags are classified as `ignore_for_now`.
+11. Confirm records with `migration_only` in `score_flags` are classified as `ignore_for_now`.
+12. Confirm `quality_band=strong` with no blocking flags and no `migration_only` flag is classified as `review_now`.
+13. Confirm `quality_band=partial` with no blocking flags is classified as `review_if_time` unless promoted by `interesting`.
+14. Confirm the stdout summary stays concise and includes total records processed, count by candidate class, label-influenced count, and output path.
+
 ## Expected Result
-At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer compare` overwrites `data/reports/scorer_v0_vs_v1.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, and `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report.
+At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer compare` overwrites `data/reports/scorer_v0_vs_v1.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report, and `python -m selector` overwrites `data/review_candidates.jsonl` with deterministic review candidates from `data/filtered_snapshots_v1.jsonl`.
