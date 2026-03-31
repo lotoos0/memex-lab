@@ -3,6 +3,11 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from selector.alignment import (
+    build_alignment_report,
+    print_summary as print_alignment_summary,
+    write_json as write_alignment_json,
+)
 from selector.config import SelectorConfig
 from selector.compare import (
     build_comparison_report,
@@ -25,9 +30,9 @@ def main() -> None:
     parser.add_argument(
         "command",
         nargs="?",
-        choices=("select", "compare"),
+        choices=("select", "compare", "alignment"),
         default="select",
-        help="Choose selection or comparison mode.",
+        help="Choose selection, comparison, or alignment mode.",
     )
     parser.add_argument(
         "--selection-version",
@@ -65,6 +70,21 @@ def main() -> None:
         default=str(config.comparison_output_path),
         help="Comparison JSON output path for compare mode.",
     )
+    parser.add_argument(
+        "--scored-input-path",
+        default=str(config.alignment_scored_input_path),
+        help="Scored snapshots JSONL input path for alignment mode.",
+    )
+    parser.add_argument(
+        "--candidate-input-path",
+        default=str(config.alignment_candidate_input_path),
+        help="Selector candidates JSONL input path for alignment mode.",
+    )
+    parser.add_argument(
+        "--alignment-output-path",
+        default=str(config.alignment_output_path),
+        help="Alignment JSON output path for alignment mode.",
+    )
     args = parser.parse_args()
 
     if args.command == "compare":
@@ -79,6 +99,26 @@ def main() -> None:
         )
         write_json(compare_output_path, comparison_report)
         print_comparison_summary(comparison_report, compare_output_path)
+        return
+
+    if args.command == "alignment":
+        scored_input_path = Path(args.scored_input_path)
+        candidate_input_path = Path(args.candidate_input_path)
+        alignment_output_path = Path(args.alignment_output_path)
+        if not scored_input_path.exists():
+            raise SystemExit(f"Alignment scored input file not found: {scored_input_path}")
+        if not candidate_input_path.exists():
+            raise SystemExit(
+                f"Alignment candidate input file not found: {candidate_input_path}"
+            )
+        alignment_report = build_alignment_report(
+            scored_records=read_jsonl(scored_input_path),
+            candidate_records=read_jsonl(candidate_input_path),
+            scored_input_path=scored_input_path,
+            candidate_input_path=candidate_input_path,
+        )
+        write_alignment_json(alignment_output_path, alignment_report)
+        print_alignment_summary(alignment_report, alignment_output_path)
         return
 
     run_selection(
@@ -137,6 +177,9 @@ def _build_config(args: argparse.Namespace, config: SelectorConfig) -> SelectorC
         output_path=output_path,
         output_path_v2=output_path_v2,
         comparison_output_path=config.comparison_output_path,
+        alignment_scored_input_path=config.alignment_scored_input_path,
+        alignment_candidate_input_path=config.alignment_candidate_input_path,
+        alignment_output_path=config.alignment_output_path,
         selection_version=config.selection_version,
         selection_version_v2=config.selection_version_v2,
     )

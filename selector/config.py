@@ -8,6 +8,8 @@ DEFAULT_LABELS_PATH = Path("data/labels/review_labels.jsonl")
 DEFAULT_REVIEW_CANDIDATES_PATH = Path("data/review_candidates.jsonl")
 DEFAULT_REVIEW_CANDIDATES_V2_PATH = Path("data/review_candidates_v2.jsonl")
 DEFAULT_COMPARISON_OUTPUT_PATH = Path("data/reports/selector_v1_vs_v2.json")
+DEFAULT_ALIGNMENT_SCORED_INPUT_PATH = Path("data/scored_snapshots_v2.jsonl")
+DEFAULT_ALIGNMENT_OUTPUT_PATH = Path("data/reports/selector_scorer_alignment_v2.json")
 DEFAULT_SELECTION_VERSION = "v0"
 DEFAULT_SELECTION_VERSION_V2 = "v2"
 
@@ -19,6 +21,9 @@ class SelectorConfig:
     output_path: Path = DEFAULT_REVIEW_CANDIDATES_PATH
     output_path_v2: Path = DEFAULT_REVIEW_CANDIDATES_V2_PATH
     comparison_output_path: Path = DEFAULT_COMPARISON_OUTPUT_PATH
+    alignment_scored_input_path: Path = DEFAULT_ALIGNMENT_SCORED_INPUT_PATH
+    alignment_candidate_input_path: Path = DEFAULT_REVIEW_CANDIDATES_V2_PATH
+    alignment_output_path: Path = DEFAULT_ALIGNMENT_OUTPUT_PATH
     selection_version: str = DEFAULT_SELECTION_VERSION
     selection_version_v2: str = DEFAULT_SELECTION_VERSION_V2
 
