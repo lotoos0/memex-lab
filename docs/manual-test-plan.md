@@ -1,7 +1,7 @@
 # Manual Test Plan
 
 ## Goal
-Verify that the staged offline pipeline listens to pump.fun new token creation and migration logs, appends normalized records to JSONL files, builds offline snapshots in `data/snapshots.jsonl`, scores them into `data/scored_snapshots.jsonl`, filters them into `data/filtered_snapshots.jsonl`, supports offline review, export, and labeling through `reviewkit`, and produces a count-based dataset audit report.
+Verify that the staged offline pipeline listens to pump.fun new token creation and migration logs, appends normalized records to JSONL files, builds offline snapshots in `data/snapshots.jsonl`, scores them into `data/scored_snapshots.jsonl`, filters them into `data/filtered_snapshots.jsonl`, supports offline review, export, and labeling through `reviewkit`, produces a count-based dataset audit report, and exposes a thin Tkinter console for running the existing offline tools.
 
 ## Setup
 1. Create a virtual environment.
@@ -407,5 +407,30 @@ The decoded mint should produce bytes without raising an exception.
 18. Rename or remove `data/review_candidates.jsonl`, run `python -m reviewfeedback.report`, and confirm it still runs cleanly using an empty candidate map.
 19. Confirm the stdout summary stays concise and still runs cleanly in the zero-state case.
 
+## Ops Console
+1. Run the console with `python -m console`.
+2. Confirm a single Tkinter window opens and remains responsive while idle.
+3. Confirm the window includes:
+   - fixed command buttons for offline pipeline tools
+   - a file status section
+   - a label form
+   - a review outcome form
+   - a command log
+4. Confirm the file status section does not auto-refresh continuously.
+5. Click `Refresh status` and confirm the file status table updates manually.
+6. Run a short command such as `Build snapshots` or `Review report` and confirm the UI stays responsive while the command runs.
+7. Confirm the file status section refreshes after a command completes.
+8. Confirm the command log shows:
+   - the invoked `python -m ...` command
+   - the exit code
+   - captured stdout
+   - captured stderr when present
+9. Use the label form to set a label and confirm it succeeds through `reviewkit.label`.
+10. Use the label form to list labels and confirm the output appears in the command log.
+11. Use the label form to remove a label and confirm it succeeds through `reviewkit.label`.
+12. Use the review outcome form to store an outcome and confirm it succeeds through `reviewfeedback.record`.
+13. Confirm the label form keeps the current `reviewkit.label` default input-path behavior and does not expose path-selection controls in v0.
+14. Confirm only one command can run at a time and the console rejects overlapping starts with a clear message.
+
 ## Expected Result
-At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer compare` overwrites `data/reports/scorer_v0_vs_v1.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report, `python -m selector` overwrites `data/review_candidates.jsonl` with deterministic review candidates from `data/filtered_snapshots_v1.jsonl`, `python -m candidateaudit` overwrites `data/reports/candidate_audit.json`, `data/review_queue_now.jsonl`, and `data/review_queue_if_time.jsonl` with deterministic candidate-audit outputs, and `python -m reviewfeedback.report` overwrites `data/reports/review_feedback_report.json` with a deterministic manual-review feedback report while `python -m reviewfeedback.record` updates `data/review_outcomes.jsonl` by mint.
+At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer compare` overwrites `data/reports/scorer_v0_vs_v1.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report, `python -m selector` overwrites `data/review_candidates.jsonl` with deterministic review candidates from `data/filtered_snapshots_v1.jsonl`, `python -m candidateaudit` overwrites `data/reports/candidate_audit.json`, `data/review_queue_now.jsonl`, and `data/review_queue_if_time.jsonl` with deterministic candidate-audit outputs, `python -m reviewfeedback.report` overwrites `data/reports/review_feedback_report.json` with a deterministic manual-review feedback report while `python -m reviewfeedback.record` updates `data/review_outcomes.jsonl` by mint, and `python -m console` opens a single-window Tkinter wrapper that runs the existing offline CLI tools without duplicating their business logic.
