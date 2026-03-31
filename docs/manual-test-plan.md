@@ -363,5 +363,49 @@ The decoded mint should produce bytes without raising an exception.
 17. Confirm the stdout summary stays concise and includes total records, class counts, label-alignment highlights, queue sizes, and report path.
 18. Confirm the code comments or docs clearly note that if labels change, `selector` must be re-run before `candidateaudit`.
 
+## Review Feedback
+1. Record a review outcome with `python -m reviewfeedback.record --mint <MINT> --outcome useful`.
+2. Confirm `data/review_outcomes.jsonl` is created.
+3. Confirm each outcome record includes:
+   - `mint`
+   - `candidate_class`
+   - `outcome`
+   - `reviewed_at`
+4. Confirm the stored outcome record includes `note` only when `--note` is provided with a non-empty value.
+5. Confirm recording the same mint again updates the existing outcome record instead of creating duplicates.
+6. Confirm `python -m reviewfeedback.record --mint <MINT> --outcome noise --note "not worth the time"` stores the optional note.
+7. Confirm the outcome recorder fails with a clear error if `data/review_candidates.jsonl` is missing.
+8. Confirm the outcome recorder fails with a clear error if the mint does not exist in the candidate input.
+9. Run the feedback report with `python -m reviewfeedback.report`.
+10. Confirm `data/reports/review_feedback_report.json` exists.
+11. Confirm the report is overwritten on rerun rather than appended.
+12. Confirm the report includes:
+   - `totals`
+   - `candidate_class_by_outcome`
+   - `label_by_outcome`
+   - `effectiveness_indicators`
+13. Confirm `totals` includes:
+   - `total_reviewed_records`
+   - `total_useful`
+   - `total_noise`
+   - `total_needs_more_context`
+14. Confirm `candidate_class_by_outcome` includes rows for:
+   - `review_now`
+   - `review_if_time`
+   - `ignore_for_now`
+15. Confirm `effectiveness_indicators` includes:
+   - `useful_rate_in_review_now`
+   - `noise_rate_in_review_if_time`
+   - `unlabeled_reviewed_count`
+16. Remove or rename `data/review_outcomes.jsonl`, run `python -m reviewfeedback.report`, and confirm it still writes a valid zero-state report.
+17. In the zero-state report, confirm:
+   - `total_reviewed_records = 0`
+   - all outcome counts are `0`
+   - `candidate_class_by_outcome` contains only zero counts
+   - `label_by_outcome` is empty
+   - rate fields are `null`
+18. Rename or remove `data/review_candidates.jsonl`, run `python -m reviewfeedback.report`, and confirm it still runs cleanly using an empty candidate map.
+19. Confirm the stdout summary stays concise and still runs cleanly in the zero-state case.
+
 ## Expected Result
-At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer compare` overwrites `data/reports/scorer_v0_vs_v1.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report, `python -m selector` overwrites `data/review_candidates.jsonl` with deterministic review candidates from `data/filtered_snapshots_v1.jsonl`, and `python -m candidateaudit` overwrites `data/reports/candidate_audit.json`, `data/review_queue_now.jsonl`, and `data/review_queue_if_time.jsonl` with deterministic candidate-audit outputs.
+At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer compare` overwrites `data/reports/scorer_v0_vs_v1.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report, `python -m selector` overwrites `data/review_candidates.jsonl` with deterministic review candidates from `data/filtered_snapshots_v1.jsonl`, `python -m candidateaudit` overwrites `data/reports/candidate_audit.json`, `data/review_queue_now.jsonl`, and `data/review_queue_if_time.jsonl` with deterministic candidate-audit outputs, and `python -m reviewfeedback.report` overwrites `data/reports/review_feedback_report.json` with a deterministic manual-review feedback report while `python -m reviewfeedback.record` updates `data/review_outcomes.jsonl` by mint.
