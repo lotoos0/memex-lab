@@ -7,6 +7,7 @@ from scorer.io import read_jsonl, write_jsonl_overwrite
 from scorer.models.scored_snapshot import ScoredSnapshot
 from scorer.rules import score_snapshot as score_snapshot_v0
 from scorer.rules_v1 import score_snapshot as score_snapshot_v1
+from scorer.rules_v2 import score_snapshot as score_snapshot_v2
 
 
 def run_scoring(
@@ -42,6 +43,8 @@ def _get_score_snapshot_function(score_version: str):
         return score_snapshot_v0
     if score_version == "v1":
         return score_snapshot_v1
+    if score_version == "v2":
+        return score_snapshot_v2
     raise ValueError(f"Unsupported score version: {score_version}")
 
 

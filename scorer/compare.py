@@ -22,48 +22,73 @@ SCREENING_BLOCKING_FLAGS = frozenset(
 def main() -> None:
     config = load_config()
     parser = argparse.ArgumentParser(
-        description="Build an aggregate-only comparison report for scorer v0 and v1 outputs.",
+        description="Build an aggregate-only comparison report for scorer outputs.",
     )
     parser.add_argument(
-        "--v0-input-path",
-        default=str(config.output_path_for("v0")),
-        help="Scorer v0 JSONL input path.",
+        "--left-version",
+        choices=("v0", "v1", "v2"),
+        default="v0",
+        help="Left scorer version.",
     )
     parser.add_argument(
-        "--v1-input-path",
-        default=str(config.output_path_for("v1")),
-        help="Scorer v1 JSONL input path.",
+        "--right-version",
+        choices=("v0", "v1", "v2"),
+        default="v1",
+        help="Right scorer version.",
+    )
+    parser.add_argument(
+        "--left-input-path",
+        default=None,
+        help="Left scorer JSONL input path.",
+    )
+    parser.add_argument(
+        "--right-input-path",
+        default=None,
+        help="Right scorer JSONL input path.",
     )
     parser.add_argument(
         "--output-path",
-        default=str(config.comparison_output_path),
+        default=None,
         help="Comparison JSON output path.",
     )
     args = parser.parse_args()
 
-    comparison_report = build_comparison_report(
-        v0_records=read_jsonl(Path(args.v0_input_path)),
-        v1_records=read_jsonl(Path(args.v1_input_path)),
-        v0_input_path=Path(args.v0_input_path),
-        v1_input_path=Path(args.v1_input_path),
+    left_input_path = Path(args.left_input_path or str(config.output_path_for(args.left_version)))
+    right_input_path = Path(
+        args.right_input_path or str(config.output_path_for(args.right_version))
     )
-    write_json(Path(args.output_path), comparison_report)
-    print_summary(comparison_report, Path(args.output_path))
+    output_path = Path(
+        args.output_path
+        or str(config.comparison_output_path_for(args.left_version, args.right_version))
+    )
+
+    comparison_report = build_comparison_report(
+        left_records=read_jsonl(left_input_path),
+        right_records=read_jsonl(right_input_path),
+        left_version=args.left_version,
+        right_version=args.right_version,
+        left_input_path=left_input_path,
+        right_input_path=right_input_path,
+    )
+    write_json(output_path, comparison_report)
+    print_summary(comparison_report, output_path)
 
 
 def build_comparison_report(
     *,
-    v0_records: list[dict[str, Any]],
-    v1_records: list[dict[str, Any]],
-    v0_input_path: Path,
-    v1_input_path: Path,
+    left_records: list[dict[str, Any]],
+    right_records: list[dict[str, Any]],
+    left_version: str,
+    right_version: str,
+    left_input_path: Path,
+    right_input_path: Path,
 ) -> dict[str, Any]:
-    v0_by_mint = _index_by_mint(v0_records)
-    v1_by_mint = _index_by_mint(v1_records)
+    left_by_mint = _index_by_mint(left_records)
+    right_by_mint = _index_by_mint(right_records)
 
-    shared_mints = sorted(set(v0_by_mint) & set(v1_by_mint))
-    v0_only_mints = sorted(set(v0_by_mint) - set(v1_by_mint))
-    v1_only_mints = sorted(set(v1_by_mint) - set(v0_by_mint))
+    shared_mints = sorted(set(left_by_mint) & set(right_by_mint))
+    left_only_mints = sorted(set(left_by_mint) - set(right_by_mint))
+    right_only_mints = sorted(set(right_by_mint) - set(left_by_mint))
 
     changed_score_count = 0
     changed_flags_count = 0
@@ -71,16 +96,16 @@ def build_comparison_report(
     score_delta_distribution: dict[str, int] = {}
     added_flag_counts: dict[str, int] = {}
     removed_flag_counts: dict[str, int] = {}
-    v0_band_distribution: dict[str, int] = {}
-    v1_band_distribution: dict[str, int] = {}
+    left_band_distribution: dict[str, int] = {}
+    right_band_distribution: dict[str, int] = {}
 
     for mint in shared_mints:
-        v0_record = v0_by_mint[mint]
-        v1_record = v1_by_mint[mint]
+        left_record = left_by_mint[mint]
+        right_record = right_by_mint[mint]
 
-        v0_score_total = _read_int(v0_record.get("score_total"))
-        v1_score_total = _read_int(v1_record.get("score_total"))
-        score_delta = v1_score_total - v0_score_total
+        left_score_total = _read_int(left_record.get("score_total"))
+        right_score_total = _read_int(right_record.get("score_total"))
+        score_delta = right_score_total - left_score_total
         score_delta_key = str(score_delta)
         score_delta_distribution[score_delta_key] = (
             score_delta_distribution.get(score_delta_key, 0) + 1
@@ -88,33 +113,33 @@ def build_comparison_report(
         if score_delta != 0:
             changed_score_count += 1
 
-        v0_flags = _read_string_set(v0_record.get("score_flags"))
-        v1_flags = _read_string_set(v1_record.get("score_flags"))
-        if v0_flags != v1_flags:
+        left_flags = _read_string_set(left_record.get("score_flags"))
+        right_flags = _read_string_set(right_record.get("score_flags"))
+        if left_flags != right_flags:
             changed_flags_count += 1
 
-        for flag in sorted(v1_flags - v0_flags):
+        for flag in sorted(right_flags - left_flags):
             added_flag_counts[flag] = added_flag_counts.get(flag, 0) + 1
-        for flag in sorted(v0_flags - v1_flags):
+        for flag in sorted(left_flags - right_flags):
             removed_flag_counts[flag] = removed_flag_counts.get(flag, 0) + 1
 
-        v0_band = _score_band(v0_score_total, v0_flags)
-        v1_band = _score_band(v1_score_total, v1_flags)
-        v0_band_distribution[v0_band] = v0_band_distribution.get(v0_band, 0) + 1
-        v1_band_distribution[v1_band] = v1_band_distribution.get(v1_band, 0) + 1
-        if v0_band != v1_band:
+        left_band = _score_band(left_score_total, left_flags)
+        right_band = _score_band(right_score_total, right_flags)
+        left_band_distribution[left_band] = left_band_distribution.get(left_band, 0) + 1
+        right_band_distribution[right_band] = right_band_distribution.get(right_band, 0) + 1
+        if left_band != right_band:
             changed_score_band_count += 1
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "v0_input_path": str(v0_input_path),
-        "v1_input_path": str(v1_input_path),
+        f"{left_version}_input_path": str(left_input_path),
+        f"{right_version}_input_path": str(right_input_path),
         "overview": {
-            "v0_record_count": len(v0_records),
-            "v1_record_count": len(v1_records),
+            f"{left_version}_record_count": len(left_records),
+            f"{right_version}_record_count": len(right_records),
             "shared_record_count": len(shared_mints),
-            "v0_only_record_count": len(v0_only_mints),
-            "v1_only_record_count": len(v1_only_mints),
+            f"{left_version}_only_record_count": len(left_only_mints),
+            f"{right_version}_only_record_count": len(right_only_mints),
             "changed_score_count": changed_score_count,
             "changed_flags_count": changed_flags_count,
             "changed_score_band_count": changed_score_band_count,
@@ -123,8 +148,8 @@ def build_comparison_report(
             key: score_delta_distribution[key] for key in sorted(score_delta_distribution, key=int)
         },
         "score_band_distribution": {
-            "v0": _sorted_band_distribution(v0_band_distribution),
-            "v1": _sorted_band_distribution(v1_band_distribution),
+            left_version: _sorted_band_distribution(left_band_distribution),
+            right_version: _sorted_band_distribution(right_band_distribution),
         },
         "flag_delta_summary": {
             "added_flag_counts": {

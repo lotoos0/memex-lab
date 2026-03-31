@@ -7,7 +7,9 @@ from pathlib import Path
 DEFAULT_SNAPSHOT_INPUT_PATH = Path("data/snapshots.jsonl")
 DEFAULT_SCORED_SNAPSHOT_V0_OUTPUT_PATH = Path("data/scored_snapshots.jsonl")
 DEFAULT_SCORED_SNAPSHOT_V1_OUTPUT_PATH = Path("data/scored_snapshots_v1.jsonl")
+DEFAULT_SCORED_SNAPSHOT_V2_OUTPUT_PATH = Path("data/scored_snapshots_v2.jsonl")
 DEFAULT_SCORER_COMPARISON_OUTPUT_PATH = Path("data/reports/scorer_v0_vs_v1.json")
+DEFAULT_SCORER_V1_V2_COMPARISON_OUTPUT_PATH = Path("data/reports/scorer_v1_vs_v2.json")
 DEFAULT_SCORE_VERSION = "v0"
 
 
@@ -16,7 +18,9 @@ class ScorerConfig:
     input_path: Path = DEFAULT_SNAPSHOT_INPUT_PATH
     output_v0_path: Path = DEFAULT_SCORED_SNAPSHOT_V0_OUTPUT_PATH
     output_v1_path: Path = DEFAULT_SCORED_SNAPSHOT_V1_OUTPUT_PATH
+    output_v2_path: Path = DEFAULT_SCORED_SNAPSHOT_V2_OUTPUT_PATH
     comparison_output_path: Path = DEFAULT_SCORER_COMPARISON_OUTPUT_PATH
+    comparison_v1_v2_output_path: Path = DEFAULT_SCORER_V1_V2_COMPARISON_OUTPUT_PATH
     score_version: str = DEFAULT_SCORE_VERSION
 
     def output_path_for(self, score_version: str) -> Path:
@@ -24,7 +28,16 @@ class ScorerConfig:
             return self.output_v0_path
         if score_version == "v1":
             return self.output_v1_path
+        if score_version == "v2":
+            return self.output_v2_path
         raise ValueError(f"Unsupported score version: {score_version}")
+
+    def comparison_output_path_for(self, left_version: str, right_version: str) -> Path:
+        if (left_version, right_version) == ("v0", "v1"):
+            return self.comparison_output_path
+        if (left_version, right_version) == ("v1", "v2"):
+            return self.comparison_v1_v2_output_path
+        return Path(f"data/reports/scorer_{left_version}_vs_{right_version}.json")
 
 
 def load_config() -> ScorerConfig:
@@ -37,14 +50,24 @@ def load_config() -> ScorerConfig:
         "SCORER_V1_OUTPUT_PATH",
         str(DEFAULT_SCORED_SNAPSHOT_V1_OUTPUT_PATH),
     )
+    output_v2_path_value = os.getenv(
+        "SCORER_V2_OUTPUT_PATH",
+        str(DEFAULT_SCORED_SNAPSHOT_V2_OUTPUT_PATH),
+    )
     comparison_output_path_value = os.getenv(
         "SCORER_COMPARE_OUTPUT_PATH",
         str(DEFAULT_SCORER_COMPARISON_OUTPUT_PATH),
+    )
+    comparison_v1_v2_output_path_value = os.getenv(
+        "SCORER_V1_V2_COMPARE_OUTPUT_PATH",
+        str(DEFAULT_SCORER_V1_V2_COMPARISON_OUTPUT_PATH),
     )
 
     return ScorerConfig(
         input_path=Path(input_path_value),
         output_v0_path=Path(output_v0_path_value),
         output_v1_path=Path(output_v1_path_value),
+        output_v2_path=Path(output_v2_path_value),
         comparison_output_path=Path(comparison_output_path_value),
+        comparison_v1_v2_output_path=Path(comparison_v1_v2_output_path_value),
     )
