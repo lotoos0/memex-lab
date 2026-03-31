@@ -176,7 +176,7 @@ The decoded mint should produce bytes without raising an exception.
    - `missing_first_seen_at`
 9. Re-run `python -m scorer --score-version v1` without changing inputs and confirm score totals, reasons, and flags stay the same across runs.
 
-## Scorer Comparison
+## Scorer Comparison v0 vs v1
 1. Run the comparison with `python -m scorer compare`.
 2. Confirm `data/reports/scorer_v0_vs_v1.json` exists.
 3. Confirm the comparison report is aggregate-only and does not contain per-mint record dumps.
@@ -190,6 +190,33 @@ The decoded mint should produce bytes without raising an exception.
 7. Confirm migrated valid records remain at `9` in both versions.
 8. Confirm `changed_score_band_count` is aggregate-only and uses the same screener thresholds and blocking definitions as before.
 9. Re-run `python -m scorer compare` without changing inputs and confirm the count-based sections stay the same across runs, aside from the comparison timestamp.
+
+## Scorer v2
+1. Run the scorer v2 with `python -m scorer --score-version v2`.
+2. Confirm `data/scored_snapshots_v2.jsonl` exists.
+3. Confirm v2 output is written to a separate file and does not overwrite `data/scored_snapshots_v1.jsonl`.
+4. Confirm each v2 scored record keeps the same schema as v1 and has `score_version="v2"`.
+5. Confirm `has_create_event` now contributes `+1` instead of `+2`.
+6. Confirm `bonding_curve_present (+1)` no longer appears in v2 `score_reasons`.
+7. Confirm non-migrated records now receive the informational `no_migration_evidence` flag.
+8. Confirm a complete migrated record with valid lifecycle order scores `7` in v2 and remains in the `strong` band.
+9. Confirm re-running `python -m scorer --score-version v2` without changing inputs keeps score totals, reasons, and flags stable across runs.
+
+## Scorer Comparison v1 vs v2
+1. Run the comparison with `python -m scorer compare --left-version v1 --right-version v2`.
+2. Confirm `data/reports/scorer_v1_vs_v2.json` exists.
+3. Confirm the comparison report is aggregate-only and does not contain per-mint record dumps.
+4. Confirm the report includes:
+   - `overview`
+   - `score_delta_distribution`
+   - `score_band_distribution`
+   - `flag_delta_summary`
+5. Confirm `changed_score_count` is very high across shared records.
+6. Confirm the score delta distribution is dominated by `-2`.
+7. Confirm non-migrated records shift from `partial` toward `weak`.
+8. Confirm complete migrated records remain `strong` at score `7`.
+9. Confirm the added-flag counts include `no_migration_evidence`.
+10. Re-run `python -m scorer compare --left-version v1 --right-version v2` without changing inputs and confirm the aggregate counts stay the same across runs, aside from the comparison timestamp.
 
 ## Screener
 1. Run the screener with `python -m screener`.
@@ -462,4 +489,4 @@ The decoded mint should produce bytes without raising an exception.
 14. Confirm only one command can run at a time and the console rejects overlapping starts with a clear message.
 
 ## Expected Result
-At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer compare` overwrites `data/reports/scorer_v0_vs_v1.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report, `python -m selector` preserves the existing candidate output in `data/review_candidates.jsonl`, `python -m selector --selection-version v2` writes precision-first selector v2 output to `data/review_candidates_v2.jsonl`, `python -m selector compare` overwrites `data/reports/selector_v1_vs_v2.json` with an aggregate comparison report, `python -m candidateaudit` overwrites `data/reports/candidate_audit.json`, `data/review_queue_now.jsonl`, and `data/review_queue_if_time.jsonl` with deterministic candidate-audit outputs, `python -m reviewfeedback.report` overwrites `data/reports/review_feedback_report.json` with a deterministic manual-review feedback report while `python -m reviewfeedback.record` updates `data/review_outcomes.jsonl` by mint, and `python -m console` opens a single-window Tkinter wrapper that runs the existing offline CLI tools without duplicating their business logic.
+At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer --score-version v2` overwrites `data/scored_snapshots_v2.jsonl` with explainable v2 scored records, `python -m scorer compare` preserves the v0 vs v1 aggregate report in `data/reports/scorer_v0_vs_v1.json`, `python -m scorer compare --left-version v1 --right-version v2` overwrites `data/reports/scorer_v1_vs_v2.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report, `python -m selector` preserves the existing candidate output in `data/review_candidates.jsonl`, `python -m selector --selection-version v2` writes precision-first selector v2 output to `data/review_candidates_v2.jsonl`, `python -m selector compare` overwrites `data/reports/selector_v1_vs_v2.json` with an aggregate comparison report, `python -m candidateaudit` overwrites `data/reports/candidate_audit.json`, `data/review_queue_now.jsonl`, and `data/review_queue_if_time.jsonl` with deterministic candidate-audit outputs, `python -m reviewfeedback.report` overwrites `data/reports/review_feedback_report.json` with a deterministic manual-review feedback report while `python -m reviewfeedback.record` updates `data/review_outcomes.jsonl` by mint, and `python -m console` opens a single-window Tkinter wrapper that runs the existing offline CLI tools without duplicating their business logic.

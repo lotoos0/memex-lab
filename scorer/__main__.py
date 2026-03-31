@@ -5,7 +5,11 @@ import logging
 from pathlib import Path
 
 from scorer.config import load_config
-from scorer.compare import build_comparison_report, print_summary as print_comparison_summary, write_json
+from scorer.compare import (
+    build_comparison_report,
+    print_summary as print_comparison_summary,
+    write_json,
+)
 from scorer.engine import get_output_path, run_scoring
 from scorer.io import read_jsonl
 
@@ -18,7 +22,7 @@ def main() -> None:
 
     config = load_config()
     parser = argparse.ArgumentParser(
-        description="Run scorer v0/v1 or compare scorer outputs.",
+        description="Run scorer v0/v1/v2 or compare scorer outputs.",
     )
     parser.add_argument(
         "command",
@@ -29,36 +33,55 @@ def main() -> None:
     )
     parser.add_argument(
         "--score-version",
-        choices=("v0", "v1"),
+        choices=("v0", "v1", "v2"),
         default=config.score_version,
         help="Score version to write in score mode.",
     )
     parser.add_argument(
-        "--v0-input-path",
-        default=get_output_path(config, score_version="v0"),
-        help="Scorer v0 JSONL input path for compare mode.",
+        "--left-version",
+        choices=("v0", "v1", "v2"),
+        default="v0",
+        help="Left score version for compare mode.",
     )
     parser.add_argument(
-        "--v1-input-path",
-        default=get_output_path(config, score_version="v1"),
-        help="Scorer v1 JSONL input path for compare mode.",
+        "--right-version",
+        choices=("v0", "v1", "v2"),
+        default="v1",
+        help="Right score version for compare mode.",
+    )
+    parser.add_argument(
+        "--left-input-path",
+        default=None,
+        help="Left scorer JSONL input path for compare mode.",
+    )
+    parser.add_argument(
+        "--right-input-path",
+        default=None,
+        help="Right scorer JSONL input path for compare mode.",
     )
     parser.add_argument(
         "--output-path",
-        default=str(config.comparison_output_path),
+        default=None,
         help="Comparison JSON output path for compare mode.",
     )
     args = parser.parse_args()
 
     if args.command == "compare":
-        v0_input_path = Path(args.v0_input_path)
-        v1_input_path = Path(args.v1_input_path)
-        compare_output_path = Path(args.output_path)
+        left_input_path = Path(args.left_input_path or get_output_path(config, score_version=args.left_version))
+        right_input_path = Path(
+            args.right_input_path or get_output_path(config, score_version=args.right_version)
+        )
+        compare_output_path = Path(
+            args.output_path
+            or config.comparison_output_path_for(args.left_version, args.right_version)
+        )
         comparison_report = build_comparison_report(
-            v0_records=read_jsonl(v0_input_path),
-            v1_records=read_jsonl(v1_input_path),
-            v0_input_path=v0_input_path,
-            v1_input_path=v1_input_path,
+            left_records=read_jsonl(left_input_path),
+            right_records=read_jsonl(right_input_path),
+            left_version=args.left_version,
+            right_version=args.right_version,
+            left_input_path=left_input_path,
+            right_input_path=right_input_path,
         )
         write_json(compare_output_path, comparison_report)
         print_comparison_summary(comparison_report, compare_output_path)
