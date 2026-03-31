@@ -325,5 +325,43 @@ The decoded mint should produce bytes without raising an exception.
 13. Confirm `quality_band=partial` with no blocking flags is classified as `review_if_time` unless promoted by `interesting`.
 14. Confirm the stdout summary stays concise and includes total records processed, count by candidate class, label-influenced count, and output path.
 
+## Candidate Audit
+1. Run candidateaudit with `python -m candidateaudit`.
+2. Confirm `data/reports/candidate_audit.json` exists.
+3. Confirm `data/review_queue_now.jsonl` exists.
+4. Confirm `data/review_queue_if_time.jsonl` exists.
+5. Confirm the report file and both queue files are overwritten on rerun.
+6. Confirm `candidateaudit` exits with a clear error if `data/review_candidates.jsonl` is missing.
+7. Confirm `candidateaudit` exits with a clear error if the input file exists but is empty or contains no valid records.
+8. Confirm queue records are strict pass-through subsets of candidate records and are not reclassified or mutated.
+9. Confirm `review_queue_now.jsonl` contains only records where `candidate_class = review_now`.
+10. Confirm `review_queue_if_time.jsonl` contains only records where `candidate_class = review_if_time`.
+11. Confirm the candidate audit JSON includes:
+   - `candidate_totals`
+   - `candidate_class_distribution`
+   - `class_label_alignment`
+   - `class_quality_context`
+   - `queue_sizes`
+   - `queue_usefulness_notes`
+12. Confirm `candidate_totals` includes:
+   - `total_records`
+   - `total_review_now`
+   - `total_review_if_time`
+   - `total_ignore_for_now`
+   - `total_labeled_records`
+13. Confirm `candidate_class_distribution` includes count and percentage by candidate class.
+14. Confirm `class_label_alignment` uses the embedded `label` field from `data/review_candidates.jsonl`.
+15. Confirm `class_label_alignment` includes:
+   - labels within each candidate class
+   - `interesting` in `review_now`
+   - `suspect` in `ignore_for_now`
+   - unlabeled records in `review_now`
+16. Confirm `class_quality_context` includes:
+   - candidate_class x quality_band
+   - candidate_class x has_blocking_flags
+   - candidate_class x has_migrated
+17. Confirm the stdout summary stays concise and includes total records, class counts, label-alignment highlights, queue sizes, and report path.
+18. Confirm the code comments or docs clearly note that if labels change, `selector` must be re-run before `candidateaudit`.
+
 ## Expected Result
-At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer compare` overwrites `data/reports/scorer_v0_vs_v1.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report, and `python -m selector` overwrites `data/review_candidates.jsonl` with deterministic review candidates from `data/filtered_snapshots_v1.jsonl`.
+At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer compare` overwrites `data/reports/scorer_v0_vs_v1.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report, `python -m selector` overwrites `data/review_candidates.jsonl` with deterministic review candidates from `data/filtered_snapshots_v1.jsonl`, and `python -m candidateaudit` overwrites `data/reports/candidate_audit.json`, `data/review_queue_now.jsonl`, and `data/review_queue_if_time.jsonl` with deterministic candidate-audit outputs.
