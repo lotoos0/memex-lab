@@ -325,6 +325,35 @@ The decoded mint should produce bytes without raising an exception.
 13. Confirm `quality_band=partial` with no blocking flags is classified as `review_if_time` unless promoted by `interesting`.
 14. Confirm the stdout summary stays concise and includes total records processed, count by candidate class, label-influenced count, and output path.
 
+## Candidate Selector v2
+1. Run selector v2 with `python -m selector --selection-version v2`.
+2. Confirm `data/review_candidates_v2.jsonl` exists.
+3. Confirm v2 output is written to a separate file and does not overwrite `data/review_candidates.jsonl`.
+4. Confirm each v2 candidate record keeps the same schema as selector v1.
+5. Confirm a non-migrated partial record defaults to `ignore_for_now`.
+6. Confirm an `interesting` label rescues a non-migrated partial record only to `review_if_time`, not `review_now`.
+7. Confirm a `review_later` label rescues a non-migrated partial record to `review_if_time`.
+8. Confirm a migrated partial record is classified as `review_now`.
+9. Confirm `suspect`, blocking flags, `migration_only`, and `missing_lifecycle_coverage` still produce explicit `ignore_for_now` outcomes in v2.
+10. Re-run `python -m selector --selection-version v2` without changing inputs and confirm the class counts and candidate reasons stay the same across runs.
+
+## Selector Comparison
+1. Run the comparison with `python -m selector compare`.
+2. Confirm `data/reports/selector_v1_vs_v2.json` exists.
+3. Confirm the comparison report is aggregate-only and does not contain per-mint candidate dumps.
+4. Confirm the report includes:
+   - `overview`
+   - `candidate_class_distribution`
+   - `class_transition_distribution`
+   - `v2_rule_impact_summary`
+5. Confirm the transition distribution shows non-migrated partial records moving from `review_if_time` or `review_now` in v1 toward `ignore_for_now` or `review_if_time` in v2.
+6. Confirm `v2_rule_impact_summary` counts:
+   - non-migrated partial default ignores
+   - interesting rescues to `review_if_time`
+   - `review_later` rescues to `review_if_time`
+   - migrated partial records promoted to `review_now`
+7. Confirm re-running `python -m selector compare` without changing inputs keeps the aggregate counts stable across runs, aside from the comparison timestamp.
+
 ## Candidate Audit
 1. Run candidateaudit with `python -m candidateaudit`.
 2. Confirm `data/reports/candidate_audit.json` exists.
@@ -433,4 +462,4 @@ The decoded mint should produce bytes without raising an exception.
 14. Confirm only one command can run at a time and the console rejects overlapping starts with a clear message.
 
 ## Expected Result
-At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer compare` overwrites `data/reports/scorer_v0_vs_v1.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report, `python -m selector` overwrites `data/review_candidates.jsonl` with deterministic review candidates from `data/filtered_snapshots_v1.jsonl`, `python -m candidateaudit` overwrites `data/reports/candidate_audit.json`, `data/review_queue_now.jsonl`, and `data/review_queue_if_time.jsonl` with deterministic candidate-audit outputs, `python -m reviewfeedback.report` overwrites `data/reports/review_feedback_report.json` with a deterministic manual-review feedback report while `python -m reviewfeedback.record` updates `data/review_outcomes.jsonl` by mint, and `python -m console` opens a single-window Tkinter wrapper that runs the existing offline CLI tools without duplicating their business logic.
+At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer compare` overwrites `data/reports/scorer_v0_vs_v1.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report, `python -m selector` preserves the existing candidate output in `data/review_candidates.jsonl`, `python -m selector --selection-version v2` writes precision-first selector v2 output to `data/review_candidates_v2.jsonl`, `python -m selector compare` overwrites `data/reports/selector_v1_vs_v2.json` with an aggregate comparison report, `python -m candidateaudit` overwrites `data/reports/candidate_audit.json`, `data/review_queue_now.jsonl`, and `data/review_queue_if_time.jsonl` with deterministic candidate-audit outputs, `python -m reviewfeedback.report` overwrites `data/reports/review_feedback_report.json` with a deterministic manual-review feedback report while `python -m reviewfeedback.record` updates `data/review_outcomes.jsonl` by mint, and `python -m console` opens a single-window Tkinter wrapper that runs the existing offline CLI tools without duplicating their business logic.
