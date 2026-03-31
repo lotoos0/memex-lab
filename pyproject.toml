@@ -25,6 +25,8 @@ memex-review-label = "reviewkit.label:main"
 memex-dataset-audit = "audit.__main__:main"
 memex-selector = "selector.__main__:main"
 memex-candidateaudit = "candidateaudit.__main__:main"
+memex-review-outcome = "reviewfeedback.record:main"
+memex-review-feedback-report = "reviewfeedback.report:main"
 
 [tool.setuptools.packages.find]
-include = ["collector*", "scorer*", "screener*", "reviewkit*", "audit*", "selector*", "candidateaudit*"]
+include = ["collector*", "scorer*", "screener*", "reviewkit*", "audit*", "selector*", "candidateaudit*", "reviewfeedback*"]
