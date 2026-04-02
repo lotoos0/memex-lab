@@ -512,5 +512,44 @@ The decoded mint should produce bytes without raising an exception.
 13. Confirm the label form keeps the current `reviewkit.label` default input-path behavior and does not expose path-selection controls in v0.
 14. Confirm only one command can run at a time and the console rejects overlapping starts with a clear message.
 
+## Pipeline Orchestrator
+1. Change into the project root directory before running the orchestrator.
+2. Run `python -m orchestrator --list`.
+3. Confirm the output lists exactly these three workflows:
+   - `full_v2_review_flow`
+   - `refresh_candidates_only`
+   - `feedback_report_only`
+4. Confirm the list output includes a short purpose and step count for each workflow.
+5. Run `python -m orchestrator --workflow feedback_report_only`.
+6. Confirm it runs exactly one step:
+   - `python -m reviewfeedback.report`
+7. Confirm the final summary includes:
+   - `workflow=feedback_report_only`
+   - total step count
+   - passed step count
+   - `failed_step=none`
+   - `status=success`
+8. Run `python -m orchestrator --workflow refresh_candidates_only`.
+9. Confirm it runs exactly these steps in order:
+   - `python -m selector --selection-version v2`
+   - `python -m candidateaudit --input-path data/review_candidates_v2.jsonl --report-output-path data/reports/candidate_audit_v2.json --queue-now-output-path data/review_queue_now_v2.jsonl --queue-if-time-output-path data/review_queue_if_time_v2.jsonl`
+10. Confirm it stops immediately if the selector step fails and does not run candidateaudit afterward.
+11. Confirm a failure summary includes the exact failing command and exit status.
+12. Run `python -m orchestrator --workflow full_v2_review_flow`.
+13. Confirm it runs exactly these steps in order:
+   - `python -m scorer --score-version v2`
+   - `python -m selector --selection-version v2`
+   - `python -m candidateaudit --input-path data/review_candidates_v2.jsonl --report-output-path data/reports/candidate_audit_v2.json --queue-now-output-path data/review_queue_now_v2.jsonl --queue-if-time-output-path data/review_queue_if_time_v2.jsonl`
+   - `python -m reviewfeedback.report`
+14. Confirm the final success summary includes the expected v2 output paths:
+   - `data/scored_snapshots_v2.jsonl`
+   - `data/review_candidates_v2.jsonl`
+   - `data/reports/candidate_audit_v2.json`
+   - `data/review_queue_now_v2.jsonl`
+   - `data/review_queue_if_time_v2.jsonl`
+   - `data/reports/review_feedback_report.json`
+15. Change into a non-project directory and run `python -m orchestrator --workflow feedback_report_only`.
+16. Confirm the command exits with a clear project-root working-directory error instead of trying to run with hidden cwd correction.
+
 ## Expected Result
-At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer --score-version v2` overwrites `data/scored_snapshots_v2.jsonl` with explainable v2 scored records, `python -m scorer compare` preserves the v0 vs v1 aggregate report in `data/reports/scorer_v0_vs_v1.json`, `python -m scorer compare --left-version v1 --right-version v2` overwrites `data/reports/scorer_v1_vs_v2.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report, `python -m selector` preserves the existing candidate output in `data/review_candidates.jsonl`, `python -m selector --selection-version v2` writes precision-first selector v2 output to `data/review_candidates_v2.jsonl`, `python -m selector compare` overwrites `data/reports/selector_v1_vs_v2.json` with an aggregate comparison report, `python -m selector alignment` overwrites `data/reports/selector_scorer_alignment_v2.json` with an aggregate selector/scorer alignment report, `python -m candidateaudit` overwrites `data/reports/candidate_audit.json`, `data/review_queue_now.jsonl`, and `data/review_queue_if_time.jsonl` with deterministic candidate-audit outputs, `python -m reviewfeedback.report` overwrites `data/reports/review_feedback_report.json` with a deterministic manual-review feedback report while `python -m reviewfeedback.record` updates `data/review_outcomes.jsonl` by mint, and `python -m console` opens a single-window Tkinter wrapper that runs the existing offline CLI tools without duplicating their business logic.
+At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer --score-version v2` overwrites `data/scored_snapshots_v2.jsonl` with explainable v2 scored records, `python -m scorer compare` preserves the v0 vs v1 aggregate report in `data/reports/scorer_v0_vs_v1.json`, `python -m scorer compare --left-version v1 --right-version v2` overwrites `data/reports/scorer_v1_vs_v2.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report, `python -m selector` preserves the existing candidate output in `data/review_candidates.jsonl`, `python -m selector --selection-version v2` writes precision-first selector v2 output to `data/review_candidates_v2.jsonl`, `python -m selector compare` overwrites `data/reports/selector_v1_vs_v2.json` with an aggregate comparison report, `python -m selector alignment` overwrites `data/reports/selector_scorer_alignment_v2.json` with an aggregate selector/scorer alignment report, `python -m candidateaudit` overwrites `data/reports/candidate_audit.json`, `data/review_queue_now.jsonl`, and `data/review_queue_if_time.jsonl` with deterministic candidate-audit outputs, `python -m reviewfeedback.report` overwrites `data/reports/review_feedback_report.json` with a deterministic manual-review feedback report while `python -m reviewfeedback.record` updates `data/review_outcomes.jsonl` by mint, `python -m console` opens a single-window Tkinter wrapper that runs the existing offline CLI tools without duplicating their business logic, and `python -m orchestrator --workflow <name>` runs one of three explicit offline workflows from the project root while stopping on the first failed step and printing a concise operational summary.
