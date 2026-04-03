@@ -522,6 +522,48 @@ The decoded mint should produce bytes without raising an exception.
 15. Rename or remove one source file and confirm `python -m reviewexport --source ...` exits with a clear missing-file error instead of writing empty output.
 16. Re-run the same export without changing inputs and confirm the output order remains deterministic.
 
+## Review Loop Metrics
+1. Run `python -m reviewloopmetrics`.
+2. Confirm it reads `data/review_candidates_v2.jsonl` as the primary source.
+3. Confirm it writes `data/reports/review_loop_metrics.json`.
+4. Confirm the report file is overwritten on rerun rather than appended.
+5. Confirm the report is aggregate-only and does not contain per-mint dumps.
+6. Confirm the report includes:
+   - `candidate_funnel`
+   - `review_coverage`
+   - `outcome_distribution`
+   - `outcome_by_candidate_class`
+   - `label_interaction_summary`
+   - `sample_size_note`
+7. Confirm `candidate_funnel` includes:
+   - `total_candidate_records`
+   - `total_review_now`
+   - `total_review_if_time`
+   - `total_ignore_for_now`
+8. Confirm `review_coverage` includes:
+   - `total_reviewed_records`
+   - `reviewed_share_of_all_candidates`
+   - `reviewed_share_of_review_now_candidates`
+   - `reviewed_share_of_review_if_time_candidates`
+9. Confirm `outcome_distribution` includes:
+   - `useful_count`
+   - `noise_count`
+   - `needs_more_context_count`
+   - `useful_rate`
+   - `noise_rate`
+10. Confirm `label_interaction_summary` includes:
+   - `reviewed_labeled_count`
+   - `reviewed_unlabeled_count`
+   - `reviewed_outcomes_by_label`
+11. Rename or remove `data/review_outcomes.jsonl`, run `python -m reviewloopmetrics`, and confirm it still writes a valid sparse report instead of crashing.
+12. In that sparse case, confirm all reviewed counts are `0`, all outcome counts are `0`, and all rate fields remain `null`.
+13. Confirm `sample_size_note` is a simple rule-based value:
+   - `low` for very small reviewed counts
+   - `moderate` for mid-sized reviewed counts
+   - `sufficient` for larger reviewed counts
+14. Confirm the stdout summary stays concise and includes top-line candidate counts, reviewed count, outcome counts, useful rate, and sample size note.
+15. Re-run `python -m reviewloopmetrics` without changing inputs and confirm the aggregate counts remain stable across runs.
+
 ## Ops Console
 1. Run the console with `python -m console`.
 2. Confirm a single Tkinter window opens and remains responsive while idle.
@@ -609,4 +651,4 @@ The decoded mint should produce bytes without raising an exception.
 16. Confirm the command exits with a clear project-root working-directory error instead of trying to run with hidden cwd correction.
 
 ## Expected Result
-At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer --score-version v2` overwrites `data/scored_snapshots_v2.jsonl` with explainable v2 scored records, `python -m scorer compare` preserves the v0 vs v1 aggregate report in `data/reports/scorer_v0_vs_v1.json`, `python -m scorer compare --left-version v1 --right-version v2` overwrites `data/reports/scorer_v1_vs_v2.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report, `python -m selector` preserves the existing candidate output in `data/review_candidates.jsonl`, `python -m selector --selection-version v2` writes precision-first selector v2 output to `data/review_candidates_v2.jsonl`, `python -m selector compare` overwrites `data/reports/selector_v1_vs_v2.json` with an aggregate comparison report, `python -m selector alignment` overwrites `data/reports/selector_scorer_alignment_v2.json` with an aggregate selector/scorer alignment report, `python -m candidateaudit` overwrites `data/reports/candidate_audit.json`, `data/review_queue_now.jsonl`, and `data/review_queue_if_time.jsonl` with deterministic candidate-audit outputs, `python -m reviewfeedback.report` overwrites `data/reports/review_feedback_report.json` with a deterministic manual-review feedback report while `python -m reviewfeedback.record` updates `data/review_outcomes.jsonl` by mint, `python -m reviewexport --source <queue-now|queue-if-time|candidates>` exports deterministic compact review-ready JSONL or CSV records from the existing v2 review sources, `python -m console` opens a single-window Tkinter wrapper that runs the existing offline CLI tools without duplicating their business logic and includes a read-only review queue preview for the v2 queue files, and `python -m orchestrator --workflow <name>` runs one of three explicit offline workflows from the project root while stopping on the first failed step and printing a concise operational summary.
+At least one real pump.fun create event remains appended to `data/events.jsonl`, migration events are appended to `data/migration_events.jsonl` when observed, `python -m collector.snapshots` overwrites `data/snapshots.jsonl` with scorer-ready but non-scoring feature snapshots, `python -m scorer` overwrites `data/scored_snapshots.jsonl` with explainable v0 scored records, `python -m scorer --score-version v1` overwrites `data/scored_snapshots_v1.jsonl` with explainable v1 scored records, `python -m scorer --score-version v2` overwrites `data/scored_snapshots_v2.jsonl` with explainable v2 scored records, `python -m scorer compare` preserves the v0 vs v1 aggregate report in `data/reports/scorer_v0_vs_v1.json`, `python -m scorer compare --left-version v1 --right-version v2` overwrites `data/reports/scorer_v1_vs_v2.json` with an aggregate comparison report, `python -m screener` overwrites `data/filtered_snapshots.jsonl` with explainable filtered records, `reviewkit` provides separate offline report, export, and label flows without mutating upstream pipeline outputs, `python -m audit` overwrites `data/reports/dataset_audit.json` with a concise count-based audit report, `python -m selector` preserves the existing candidate output in `data/review_candidates.jsonl`, `python -m selector --selection-version v2` writes precision-first selector v2 output to `data/review_candidates_v2.jsonl`, `python -m selector compare` overwrites `data/reports/selector_v1_vs_v2.json` with an aggregate comparison report, `python -m selector alignment` overwrites `data/reports/selector_scorer_alignment_v2.json` with an aggregate selector/scorer alignment report, `python -m candidateaudit` overwrites `data/reports/candidate_audit.json`, `data/review_queue_now.jsonl`, and `data/review_queue_if_time.jsonl` with deterministic candidate-audit outputs, `python -m reviewfeedback.report` overwrites `data/reports/review_feedback_report.json` with a deterministic manual-review feedback report while `python -m reviewfeedback.record` updates `data/review_outcomes.jsonl` by mint, `python -m reviewexport --source <queue-now|queue-if-time|candidates>` exports deterministic compact review-ready JSONL or CSV records from the existing v2 review sources, `python -m reviewloopmetrics` overwrites `data/reports/review_loop_metrics.json` with an aggregate review-loop funnel and coverage report, `python -m console` opens a single-window Tkinter wrapper that runs the existing offline CLI tools without duplicating their business logic and includes a read-only review queue preview for the v2 queue files, and `python -m orchestrator --workflow <name>` runs one of three explicit offline workflows from the project root while stopping on the first failed step and printing a concise operational summary.
