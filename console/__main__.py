@@ -12,6 +12,7 @@ from console.status import collect_status_rows, format_size
 REPO_ROOT = Path(__file__).resolve().parents[1]
 QUEUE_NOW_V2_PATH = REPO_ROOT / "data" / "review_queue_now_v2.jsonl"
 QUEUE_IF_TIME_V2_PATH = REPO_ROOT / "data" / "review_queue_if_time_v2.jsonl"
+PIPELINE_HEALTH_PATH = REPO_ROOT / "data" / "reports" / "pipeline_health.json"
 
 
 class OpsConsoleApp:
@@ -24,6 +25,8 @@ class OpsConsoleApp:
         self.log_text: scrolledtext.ScrolledText | None = None
         self.queue_detail_text: scrolledtext.ScrolledText | None = None
         self.status_message = StringVar(value="Ready.")
+        self.readiness_state = StringVar(value="Readiness: unknown")
+        self.readiness_detail = StringVar(value="pipeline_health.json not found.")
         self.label_mint = StringVar()
         self.label_choice = StringVar(value=LABEL_CHOICES[0])
         self.label_note = StringVar()
@@ -53,6 +56,7 @@ class OpsConsoleApp:
         header = ttk.Frame(self.root, padding=12)
         header.grid(row=0, column=0, columnspan=2, sticky="ew")
         header.columnconfigure(0, weight=1)
+        header.columnconfigure(1, weight=0)
 
         ttk.Label(
             header,
@@ -66,6 +70,27 @@ class OpsConsoleApp:
         ttk.Label(header, textvariable=self.status_message).grid(
             row=2, column=0, sticky="w", pady=(8, 0)
         )
+
+        readiness_frame = ttk.LabelFrame(header, text="Readiness", padding=8)
+        readiness_frame.grid(row=0, column=1, rowspan=3, sticky="ne", padx=(12, 0))
+        readiness_frame.columnconfigure(0, weight=1)
+
+        ttk.Label(
+            readiness_frame,
+            textvariable=self.readiness_state,
+            font=("Segoe UI", 10, "bold"),
+        ).grid(row=0, column=0, sticky="w")
+        ttk.Label(
+            readiness_frame,
+            textvariable=self.readiness_detail,
+            wraplength=260,
+            justify="left",
+        ).grid(row=1, column=0, sticky="w", pady=(4, 8))
+        ttk.Button(
+            readiness_frame,
+            text="Refresh readiness",
+            command=self.refresh_readiness,
+        ).grid(row=2, column=0, sticky="w")
 
         commands_frame = ttk.LabelFrame(self.root, text="Commands", padding=12)
         commands_frame.grid(row=1, column=0, sticky="nsew", padx=(12, 6), pady=(0, 6))
@@ -295,7 +320,13 @@ class OpsConsoleApp:
             )
 
         self.refresh_review_queue()
+        self.refresh_readiness()
         self.status_message.set("Status refreshed.")
+
+    def refresh_readiness(self) -> None:
+        state_text, detail_text = self._load_readiness_summary()
+        self.readiness_state.set(state_text)
+        self.readiness_detail.set(detail_text)
 
     def refresh_review_queue(self) -> None:
         previous_selected_key = self.selected_queue_key
@@ -556,6 +587,49 @@ class OpsConsoleApp:
             )
         )
         return queue_records, queue_messages
+
+    def _load_readiness_summary(self) -> tuple[str, str]:
+        if not PIPELINE_HEALTH_PATH.exists():
+            return ("Readiness: unknown", "pipeline_health.json not found.")
+
+        try:
+            with PIPELINE_HEALTH_PATH.open("r", encoding="utf-8") as handle:
+                document = json.load(handle)
+        except (OSError, json.JSONDecodeError):
+            return ("Readiness: unknown", "pipeline_health.json is missing or invalid.")
+
+        if not isinstance(document, dict):
+            return ("Readiness: unknown", "pipeline_health.json is missing or invalid.")
+
+        overall_status = document.get("overall_status")
+        if not isinstance(overall_status, dict):
+            return ("Readiness: unknown", "pipeline_health.json is missing required fields.")
+
+        readiness_state = overall_status.get("readiness_state")
+        error_count = overall_status.get("error_count")
+        warning_count = overall_status.get("warning_count")
+        warnings = document.get("warnings")
+        missing_artifacts = document.get("missing_artifacts")
+
+        if not isinstance(readiness_state, str):
+            return ("Readiness: unknown", "pipeline_health.json is missing required fields.")
+        if not isinstance(error_count, int) or not isinstance(warning_count, int):
+            return ("Readiness: unknown", "pipeline_health.json is missing required fields.")
+
+        top_issue = "No issues."
+        if isinstance(warnings, list) and warnings and isinstance(warnings[0], str):
+            top_issue = warnings[0]
+        elif (
+            isinstance(missing_artifacts, list)
+            and missing_artifacts
+            and isinstance(missing_artifacts[0], str)
+        ):
+            top_issue = f"Missing: {missing_artifacts[0]}"
+
+        return (
+            f"Readiness: {readiness_state}",
+            f"errors={error_count} warnings={warning_count} top_issue={top_issue}",
+        )
 
     def _find_queue_record_index(
         self,

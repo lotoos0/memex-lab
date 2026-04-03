@@ -22,6 +22,7 @@ def build_command_sections() -> tuple[tuple[str, tuple[CommandSpec, ...]], ...]:
                 CommandSpec("Build snapshots", "collector.snapshots"),
                 CommandSpec("Score v0", "scorer"),
                 CommandSpec("Score v1", "scorer", ("--score-version", "v1")),
+                CommandSpec("Run pipeline health", "pipelinehealth"),
                 CommandSpec("Compare v0 vs v1", "scorer", ("compare",)),
                 CommandSpec(
                     "Run screener",
