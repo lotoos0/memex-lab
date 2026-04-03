@@ -644,20 +644,29 @@ The decoded mint should produce bytes without raising an exception.
 16. Confirm workflow stdout and stderr appear in the existing command log panel rather than in a separate output area.
 17. Confirm file status refreshes after a workflow completes, just like the existing command buttons.
 18. Confirm only one command can run at a time and the console rejects overlapping starts with a clear message for workflow buttons as well as the existing buttons and forms.
-19. Confirm the window includes a read-only `Review queue` section inside the existing main console window.
-20. Confirm the queue section reads from:
+19. Confirm the Commands frame includes `Run pipeline health` in the existing command list.
+20. Run `Run pipeline health` and confirm it launches `python -m pipelinehealth` through the existing command runner.
+21. Confirm the console includes a compact `Readiness` panel that contains only:
+   - current readiness state
+   - one short issue/detail line
+   - `Refresh readiness`
+22. Confirm the readiness panel reads only the current `data/reports/pipeline_health.json` report and does not recompute health logic inside the console.
+23. Rename, remove, or corrupt `data/reports/pipeline_health.json` and confirm the readiness panel shows a clear missing/invalid message instead of crashing.
+24. Restore a valid `pipeline_health.json`, click `Refresh readiness`, and confirm the panel updates the displayed readiness state and top issue.
+25. Confirm the window includes a read-only `Review queue` section inside the existing main console window.
+26. Confirm the queue section reads from:
    - `data/review_queue_now_v2.jsonl`
    - `data/review_queue_if_time_v2.jsonl`
-21. Confirm queue records appear in a simple selectable list that includes queue source, mint, `candidate_class`, `quality_band`, score, and label.
-22. Confirm the list may truncate mint display for readability, while the full mint remains available in the detail preview and form fields.
-23. Select a queue record and confirm the detail preview shows the full mint and a read-only JSON preview of the selected record.
-24. Confirm the read-only JSON preview does not include the console-injected `_queue_name` field.
-25. Confirm selecting a queue record autofills the existing label mint field and the existing review outcome mint field with the full mint value.
-26. Refresh status or complete a command while the selected queue record still exists and confirm the selection stays on that same record instead of jumping back to item 0.
-27. Click `Next item` and confirm queue navigation advances only when explicitly requested.
-28. Confirm storing a label or review outcome does not auto-advance to the next queue record.
-29. Rename or remove one v2 queue file and confirm the queue detail area shows a clear missing-file message instead of crashing.
-30. Click `Refresh queues` after restoring the file and confirm the list and detail preview reload cleanly.
+27. Confirm queue records appear in a simple selectable list that includes queue source, mint, `candidate_class`, `quality_band`, score, and label.
+28. Confirm the list may truncate mint display for readability, while the full mint remains available in the detail preview and form fields.
+29. Select a queue record and confirm the detail preview shows the full mint and a read-only JSON preview of the selected record.
+30. Confirm the read-only JSON preview does not include the console-injected `_queue_name` field.
+31. Confirm selecting a queue record autofills the existing label mint field and the existing review outcome mint field with the full mint value.
+32. Refresh status or complete a command while the selected queue record still exists and confirm the selection stays on that same record instead of jumping back to item 0.
+33. Click `Next item` and confirm queue navigation advances only when explicitly requested.
+34. Confirm storing a label or review outcome does not auto-advance to the next queue record.
+35. Rename or remove one v2 queue file and confirm the queue detail area shows a clear missing-file message instead of crashing.
+36. Click `Refresh queues` after restoring the file and confirm the list and detail preview reload cleanly.
 
 ## Pipeline Orchestrator
 1. Change into the project root directory before running the orchestrator.
