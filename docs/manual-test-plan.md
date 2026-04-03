@@ -492,6 +492,7 @@ The decoded mint should produce bytes without raising an exception.
 2. Confirm a single Tkinter window opens and remains responsive while idle.
 3. Confirm the window includes:
    - fixed command buttons for offline pipeline tools
+   - workflow buttons inside the Commands section
    - a file status section
    - a label form
    - a review outcome form
@@ -510,7 +511,14 @@ The decoded mint should produce bytes without raising an exception.
 11. Use the label form to remove a label and confirm it succeeds through `reviewkit.label`.
 12. Use the review outcome form to store an outcome and confirm it succeeds through `reviewfeedback.record`.
 13. Confirm the label form keeps the current `reviewkit.label` default input-path behavior and does not expose path-selection controls in v0.
-14. Confirm only one command can run at a time and the console rejects overlapping starts with a clear message.
+14. Confirm the Commands frame includes a `Workflows` section with exactly these buttons:
+   - `full_v2_review_flow`
+   - `refresh_candidates_only`
+   - `feedback_report_only`
+15. Click `feedback_report_only` and confirm the console launches `python -m orchestrator --workflow feedback_report_only` through the existing command runner.
+16. Confirm workflow stdout and stderr appear in the existing command log panel rather than in a separate output area.
+17. Confirm file status refreshes after a workflow completes, just like the existing command buttons.
+18. Confirm only one command can run at a time and the console rejects overlapping starts with a clear message for workflow buttons as well as the existing buttons and forms.
 
 ## Pipeline Orchestrator
 1. Change into the project root directory before running the orchestrator.

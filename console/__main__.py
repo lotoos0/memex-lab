@@ -60,16 +60,17 @@ class OpsConsoleApp:
 
         commands_frame = ttk.LabelFrame(self.root, text="Commands", padding=12)
         commands_frame.grid(row=1, column=0, sticky="nsew", padx=(12, 6), pady=(0, 6))
-        commands_frame.columnconfigure(0, weight=1)
-        commands_frame.columnconfigure(1, weight=1)
+        command_sections = build_command_sections()
+        for section_index in range(len(command_sections)):
+            commands_frame.columnconfigure(section_index, weight=1)
 
-        for section_index, (section_name, specs) in enumerate(build_command_sections()):
+        for section_index, (section_name, specs) in enumerate(command_sections):
             section_frame = ttk.LabelFrame(commands_frame, text=section_name, padding=8)
             section_frame.grid(
                 row=0,
                 column=section_index,
                 sticky="nsew",
-                padx=(0, 8) if section_index == 0 else (8, 0),
+                padx=4,
             )
             section_frame.columnconfigure(0, weight=1)
 
