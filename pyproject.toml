@@ -32,6 +32,7 @@ memex-console = "console.__main__:main"
 memex-orchestrator = "orchestrator.__main__:main"
 memex-reviewexport = "reviewexport.__main__:main"
 memex-reviewloopmetrics = "reviewloopmetrics.__main__:main"
+memex-operatorsnapshot = "operatorsnapshot.__main__:main"
 
 [tool.setuptools.packages.find]
-include = ["collector*", "scorer*", "screener*", "reviewkit*", "audit*", "selector*", "candidateaudit*", "reviewfeedback*", "console*", "orchestrator*", "reviewexport*", "reviewloopmetrics*"]
+include = ["collector*", "scorer*", "screener*", "reviewkit*", "audit*", "selector*", "candidateaudit*", "reviewfeedback*", "console*", "orchestrator*", "reviewexport*", "reviewloopmetrics*", "operatorsnapshot*"]
