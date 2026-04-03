@@ -45,4 +45,24 @@ def build_command_sections() -> tuple[tuple[str, tuple[CommandSpec, ...]], ...]:
                 CommandSpec("Feedback report", "reviewfeedback.report"),
             ),
         ),
+        (
+            "Workflows",
+            (
+                CommandSpec(
+                    "full_v2_review_flow",
+                    "orchestrator",
+                    ("--workflow", "full_v2_review_flow"),
+                ),
+                CommandSpec(
+                    "refresh_candidates_only",
+                    "orchestrator",
+                    ("--workflow", "refresh_candidates_only"),
+                ),
+                CommandSpec(
+                    "feedback_report_only",
+                    "orchestrator",
+                    ("--workflow", "feedback_report_only"),
+                ),
+            ),
+        ),
     )
